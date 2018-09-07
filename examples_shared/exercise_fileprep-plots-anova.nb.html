@@ -434,10 +434,8 @@ mean of the differences
 </ul>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG4jIGRvZXMgaHIgZGlmZmVyZW5jZSBieSBjb25kaXRpb24gYWxzbyBpbnRlcmFjdCB3aXRoIG9yZGVyIG9mIHNlc3Npb25zP1xuXG5saWJyYXJ5KGNhcilcbmxpYnJhcnkoYWZleClcbmBgYCJ9 -->
-<pre class="r"><code>
-# does hr difference by condition also interact with order of sessions?
-
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBkb2VzIGhyIGRpZmZlcmVuY2UgYnkgY29uZGl0aW9uIGFsc28gaW50ZXJhY3Qgd2l0aCBvcmRlciBvZiBzZXNzaW9ucz9cbmxpYnJhcnkoY2FyKVxubGlicmFyeShhZmV4KVxuYGBgIn0= -->
+<pre class="r"><code># does hr difference by condition also interact with order of sessions?
 library(car)
 library(afex)</code></pre>
 <!-- rnb-source-end -->
@@ -445,18 +443,58 @@ library(afex)</code></pre>
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyByZXBlYXRlZCBtZWFzdXJlcyB2YXJpYWJsZXMgc3BlY2lmaWVkIGluIGVycm9yIHRlcm0gYnkgc3ViamVjdFxuIyBpZiB5b3UgaGFkIG5vIHJlcGVhdGVkIG1lYXVyZXMgdmFsdWVzIHlvdSB3b3VsZCB3cml0ZTogRXJyb3IoYmlrZV9pZClcbiMgaWYgeW91IGhhZCB0d28gcmVwZWF0ZWQgbWVhdXJlcyB2YWx1ZXMgeW91IHdvdWxkIHdyaXRlOiBFcnJvcihiaWtlX2lkL3ZhcmlhYmxlMSp2YXJpYWJsZTIpXG5cbmFvdkhSPC1hb3ZfY2FyKGhyfmNvbmRpdGlvbipvcmRlcitFcnJvcihiaWtlX2lkL2NvbmRpdGlvbiksZGF0YV9sb25nKVxubmljZShhb3ZIUilcbmFvdkhSX2ZpdHRlZDwtbHNtZWFucyhhb3ZIUix+Y29uZGl0aW9ufG9yZGVyKVxuYW92SFJfZml0dGVkXG5wYWlycyhhb3ZIUl9maXR0ZWQpXG5cbmBgYCJ9 -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyByZXBlYXRlZCBtZWFzdXJlcyB2YXJpYWJsZXMgc3BlY2lmaWVkIGluIGVycm9yIHRlcm0gYnkgc3ViamVjdFxuIyBpZiB5b3UgaGFkIG5vIHJlcGVhdGVkIG1lYXVyZXMgdmFsdWVzIHlvdSB3b3VsZCB3cml0ZTogRXJyb3IoYmlrZV9pZClcbiMgaWYgeW91IGhhZCB0d28gcmVwZWF0ZWQgbWVhdXJlcyB2YWx1ZXMgeW91IHdvdWxkIHdyaXRlOiBFcnJvcihiaWtlX2lkL3ZhcmlhYmxlMSp2YXJpYWJsZTIpXG5hb3ZIUjwtYW92X2Nhcihocn5jb25kaXRpb24qb3JkZXIrRXJyb3IoYmlrZV9pZC9jb25kaXRpb24pLGRhdGFfbG9uZylcbmBgYCJ9 -->
 <pre class="r"><code># repeated measures variables specified in error term by subject
 # if you had no repeated meaures values you would write: Error(bike_id)
 # if you had two repeated meaures values you would write: Error(bike_id/variable1*variable2)
-
-aovHR&lt;-aov_car(hr~condition*order+Error(bike_id/condition),data_long)
-nice(aovHR)
-aovHR_fitted&lt;-lsmeans(aovHR,~condition|order)
-aovHR_fitted
-pairs(aovHR_fitted)
-</code></pre>
+aovHR&lt;-aov_car(hr~condition*order+Error(bike_id/condition),data_long)</code></pre>
 <!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiQ29udHJhc3RzIHNldCB0byBjb250ci5zdW0gZm9yIHRoZSBmb2xsb3dpbmcgdmFyaWFibGVzOiBvcmRlclxuIn0= -->
+<pre><code>Contrasts set to contr.sum for the following variables: order</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubmljZShhb3ZIUilcbmBgYCJ9 -->
+<pre class="r"><code>nice(aovHR)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiQW5vdmEgVGFibGUgKFR5cGUgMyB0ZXN0cylcblxuUmVzcG9uc2U6IGhyXG4gICAgICAgICAgIEVmZmVjdCAgICBkZiAgIE1TRSAgICAgICAgICBGICAgZ2VzIHAudmFsdWVcbjEgICAgICAgICAgIG9yZGVyIDEsIDMyIDY1LjI4ICAgICAgIDAuMDQgLjAwMDYgICAgIC44NVxuMiAgICAgICBjb25kaXRpb24gMSwgMzIgNjQuMzEgMTE1LjYwICoqKiAgIC42NCAgPC4wMDAxXG4zIG9yZGVyOmNvbmRpdGlvbiAxLCAzMiA2NC4zMSAgICAgICAwLjY5ICAgLjAxICAgICAuNDFcbi0tLVxuU2lnbmlmLiBjb2RlczogIDAg4oCYKioq4oCZIDAuMDAxIOKAmCoq4oCZIDAuMDEg4oCYKuKAmSAwLjA1IOKAmCvigJkgMC4xIOKAmCDigJkgMVxuIn0= -->
+<pre><code>Anova Table (Type 3 tests)
+
+Response: hr
+           Effect    df   MSE          F   ges p.value
+1           order 1, 32 65.28       0.04 .0006     .85
+2       condition 1, 32 64.31 115.60 ***   .64  &lt;.0001
+3 order:condition 1, 32 64.31       0.69   .01     .41
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘+’ 0.1 ‘ ’ 1</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYW92SFJfZml0dGVkPC1sc21lYW5zKGFvdkhSLH5jb25kaXRpb258b3JkZXIpXG5hb3ZIUl9maXR0ZWRcbmBgYCJ9 -->
+<pre class="r"><code>aovHR_fitted&lt;-lsmeans(aovHR,~condition|order)
+aovHR_fitted</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoib3JkZXIgPSBhY3RpdmUtZmlyc3Q6XG4gY29uZGl0aW9uICAgbHNtZWFuICAgICAgIFNFIGRmIGxvd2VyLkNMIHVwcGVyLkNMXG4gYWN0aXZlICAgIDcxLjU4ODI0IDEuOTUyMjU4IDY0IDY3LjY4ODE1IDc1LjQ4ODMyXG4gcGFzc2l2ZSAgIDQ5LjA1ODgyIDEuOTUyMjU4IDY0IDQ1LjE1ODc0IDUyLjk1ODkxXG5cbm9yZGVyID0gcGFzc2l2ZS1maXJzdDpcbiBjb25kaXRpb24gICBsc21lYW4gICAgICAgU0UgZGYgbG93ZXIuQ0wgdXBwZXIuQ0xcbiBhY3RpdmUgICAgNjkuNTg4MjQgMS45NTIyNTggNjQgNjUuNjg4MTUgNzMuNDg4MzJcbiBwYXNzaXZlICAgNTAuMjk0MTIgMS45NTIyNTggNjQgNDYuMzk0MDMgNTQuMTk0MjFcblxuQ29uZmlkZW5jZSBsZXZlbCB1c2VkOiAwLjk1IFxuIn0= -->
+<pre><code>order = active-first:
+ condition   lsmean       SE df lower.CL upper.CL
+ active    71.58824 1.952258 64 67.68815 75.48832
+ passive   49.05882 1.952258 64 45.15874 52.95891
+
+order = passive-first:
+ condition   lsmean       SE df lower.CL upper.CL
+ active    69.58824 1.952258 64 65.68815 73.48832
+ passive   50.29412 1.952258 64 46.39403 54.19421
+
+Confidence level used: 0.95 </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGFpcnMoYW92SFJfZml0dGVkKVxuYGBgIn0= -->
+<pre class="r"><code>pairs(aovHR_fitted)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoib3JkZXIgPSBhY3RpdmUtZmlyc3Q6XG4gY29udHJhc3QgICAgICAgICBlc3RpbWF0ZSAgICAgIFNFIGRmIHQucmF0aW8gcC52YWx1ZVxuIGFjdGl2ZSAtIHBhc3NpdmUgMjIuNTI5NDEgMi43NTA1OSAzMiAgIDguMTkxICA8LjAwMDFcblxub3JkZXIgPSBwYXNzaXZlLWZpcnN0OlxuIGNvbnRyYXN0ICAgICAgICAgZXN0aW1hdGUgICAgICBTRSBkZiB0LnJhdGlvIHAudmFsdWVcbiBhY3RpdmUgLSBwYXNzaXZlIDE5LjI5NDEyIDIuNzUwNTkgMzIgICA3LjAxNSAgPC4wMDAxXG4ifQ== -->
+<pre><code>order = active-first:
+ contrast         estimate      SE df t.ratio p.value
+ active - passive 22.52941 2.75059 32   8.191  &lt;.0001
+
+order = passive-first:
+ contrast         estimate      SE df t.ratio p.value
+ active - passive 19.29412 2.75059 32   7.015  &lt;.0001</code></pre>
+<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
