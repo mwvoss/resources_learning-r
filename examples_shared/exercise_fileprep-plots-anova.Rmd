@@ -1,0 +1,266 @@
+---
+title: "Examples for common file prep, plotting, and anova"
+author: "Michelle Voss"
+output:
+  html_document:
+    keep_md: yes
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: flatly
+  html_notebook: null
+  pdf_document: default
+    
+---
+
+
+**Clear previous, load packages**
+
+```{r, warning=FALSE, include=FALSE}
+
+rm(list=ls(all=TRUE)) 
+
+# Load basic packages for working with data, we'll load others later too
+library(knitr)
+library(reshape2)
+library(tidyverse)
+
+R.Version()
+getwd()
+```
+
+
+
+**This is a "wide format" file with data from our acute exercise manipulation in the bike project**  
+* There are 34 participants, 11 variables
+
+```{r}
+
+# load acute variables data file
+data = read.table("exercise_fileprep-plots-anova_data/acute_physio-variables-forR.csv", header=TRUE, sep = ",", fill = TRUE)
+
+# look at features of your variables (encoded as integer, numeric or factors?)
+str(data)
+
+```
+
+
+
+**Referring to variables in a dataset**
+
+```{r}
+
+# change hr to percent for clarity of axes
+# generic call of variable is dataframe$variable
+# read <- as "is given by"
+# here we are recoding, rather than making a new variable
+
+data$hr_active <- 100*data$hr_active 
+data$hr_passive <- 100*data$hr_passive
+
+```
+
+
+**Reshaping from wide to long**
+* Especially for longitudinal data, long format is much "tidyer"  
+  * One nugget of info fits in each cell and use columns to label attributes of variable values  
+  
+  
+```{r}
+
+# reshape is a function to help transform from wide to long 
+# look at the dataframe to see if you can tell how it's working
+# it will not work if the variable name has two delimiters (e.g. notice all variables have only one underscore)
+# when you name your variables initially, it's is very helpful to have the variable attribute (e.g., session, condition) following the underscore
+
+data_long<-reshape(data,
+                             varying=c(3:10),
+                             timevar="condition",
+                             direction="long",
+                             idvar="bike_id",
+                             sep="_") 
+
+```
+
+
+
+**Plotting to understand the data**  
+* label your chunk and any figures will be saved in a directory at low-res for rendering on github or sending to colleagues   
+* Histograms and boxplots are nice for initial description  
+  * Familiarize with distribution shape (normal or skewed) and anything funky (outliers)  
+
+
+
+Simple box plot  
+* aes <- aesthetics, basic parameters of what to plot from the dataframe  
+* generic call: ggplot(dataframe,aes(x=variable-on-x-axis,y=variable-on-y-axis,fill=variable-to-color-code))  
+* geom_boxplot() make a boxplot  
+  * https://ggplot2.tidyverse.org/reference/geom_boxplot.html  
+  * http://www.sthda.com/english/wiki/ggplot2-box-plot-quick-start-guide-r-software-and-data-visualization  
+* geom_point() add points for individuals by making a scatter plot with a factor variable here  
+  * https://ggplot2.tidyverse.org/reference/geom_point.html  
+
+```{r}
+ggplot(data_long, aes(x=condition,y=hr,fill=condition)) +
+  geom_boxplot() +
+  geom_point() +
+  labs(title="Acute Phase Intensity",y="%HRmax",x="",fill="Condition") 
+```
+
+
+
+**GGplot is powerful and can help you add a lot of information to a plot like below**  
+
+```{r acute-hr}
+
+# center title
+theme_update(plot.title = element_text(hjust = 0.5))
+
+# ggplot tool
+# each parentheses after the + adds a new feature to the plot
+
+ggplot(data_long, aes(x=condition,y=hr,fill=condition)) + 
+  scale_fill_manual(values=c("#E3871C", "#F5BD78")) +
+  geom_boxplot() + 
+  geom_point(aes(color=rpe)) +
+  scale_color_gradient(low="gray",high="black",name="RPE") +
+  labs(title="Acute Phase Intensity",y="%HRmax",x="",fill="Condition") +
+  geom_text(aes(label=ifelse((hr>(quantile(hr,.75)+3*IQR(hr))|hr<(quantile(hr,.25)-3*IQR(hr))),paste(subject_id),"")), hjust=1.1, check_overlap = TRUE, size=3) + 
+  theme(title=element_text(size=20, face='bold'),
+        axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=15))
+
+# save a high-resolution file in your directory for pub-level figures
+ggsave("acute-hr.tiff", width = 200, height = 100, units = "mm",dpi=300) 
+
+```
+
+
+
+**How about a bar graph with error bars?**  
+* fun.data=mean_se -> standard error  
+* fun.data=mean_cl_normal -> confidence interval  
+* Web resources  
+  * http://murraylax.org/rtutorials/barplots.html  
+  
+  
+```{r}
+
+# center title
+theme_update(plot.title = element_text(hjust = 0.5))
+
+ggplot(data = data_long, aes(x = condition, y = hr)) +
+  stat_summary(aes(y = hr), size=.5, fun.y = mean, geom="bar",size=1) + 
+  stat_summary(fun.data=mean_cl_normal, geom="errorbar", size=.5,width=.3) + 
+  labs(title="Acute Phase Intensity",y="%HRmax",x="",fill="Condition")  +
+  scale_x_discrete(name="Condition") + 
+  scale_y_continuous(name = "%HRmax") +
+  ylim(0,100) +
+  theme(title=element_text(size=20, face='bold'),
+        axis.text.x = element_text(size=20,face='bold',angle = 30, hjust = 1),
+        axis.text.y = element_text(size=20,face='bold'),
+        axis.title.y = element_text(size=15))
+```
+
+
+
+**Show individuals on one plot**  
+
+```{r}
+ggplot(data_long, aes(x=condition,y=hr,group=bike_id,color=order)) + 
+  geom_line() + 
+  geom_point() +
+  labs(title="Acute Phase Intensity",y="%HRmax")
+```
+
+
+**Power of facet wrap to plot by a factor**  
+* by variable factor
+
+```{r}
+
+# add labels to a dummy coded factor
+data_long$order<-factor(data_long$order,levels=c(1,0),labels=c("active-first","passive-first"))  
+
+
+ggplot(data_long, aes(x=condition,y=hr,group=bike_id,color=order)) + 
+  geom_line() + 
+  geom_point() +
+  facet_wrap(~order) +
+  labs(title="Acute Phase Intensity",y="%HRmax") + 
+  theme(strip.text = element_text(face="bold", size=15,lineheight=5.0), 
+        strip.background = element_rect(colour="black", size=1))
+```
+
+
+* by subject  
+
+```{r}
+ggplot(data_long, aes(x=condition,y=hr,group=bike_id,color=order)) + 
+  geom_line() + 
+  geom_point() +
+  facet_wrap(~bike_id)
+```
+
+
+
+
+**Paired t-test**  
+* nice little tutorial with graphing supplements
+  * https://rcompanion.org/rcompanion/d_09.html
+  
+  
+  
+* for wide format
+
+```{r}
+t.test(data$hr_active, 
+       data$hr_passive, 
+       paired=TRUE, 
+       conf.level=0.95)
+```
+
+
+* for long format
+```{r}
+t.test(hr ~ condition, 
+       data=data_long, 
+       paired=TRUE, 
+       conf.level=0.95)
+```
+
+
+
+
+**ANOVAs**  
+* nice little tutorial   
+  * http://singmann.org/anova-in-r-afex-may-be-the-solution-you-are-looking-for/  
+  
+
+* long format
+
+```{r warning=FALSE}
+
+# does hr difference by condition also interact with order of sessions?
+
+library(car)
+library(afex)
+```
+
+
+```{r}
+# repeated measures variables specified in error term by subject
+# if you had no repeated meaures values you would write: Error(bike_id)
+# if you had two repeated meaures values you would write: Error(bike_id/variable1*variable2)
+
+aovHR<-aov_car(hr~condition*order+Error(bike_id/condition),data_long)
+nice(aovHR)
+aovHR_fitted<-lsmeans(aovHR,~condition|order)
+aovHR_fitted
+pairs(aovHR_fitted)
+
+```
+

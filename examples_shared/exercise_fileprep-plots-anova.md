@@ -340,10 +340,6 @@ library(afex)
 ```
 
 ```
-## Warning: package 'Matrix' was built under R version 3.3.2
-```
-
-```
 ## 
 ## Attaching package: 'Matrix'
 ```
@@ -389,6 +385,8 @@ library(afex)
 ## 
 ##     lmer
 ```
+
+
 
 ```r
 # repeated measures variables specified in error term by subject
