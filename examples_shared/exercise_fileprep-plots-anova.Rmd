@@ -206,8 +206,6 @@ ggplot(data_long, aes(x=condition,y=hr,group=bike_id,color=order)) +
 ```
 
 
-
-
 **Paired t-test**  
 * nice little tutorial with graphing supplements
   * https://rcompanion.org/rcompanion/d_09.html
@@ -233,12 +231,9 @@ t.test(hr ~ condition,
 ```
 
 
-
-
 **ANOVAs**  
 * nice little tutorial   
   * http://singmann.org/anova-in-r-afex-may-be-the-solution-you-are-looking-for/  
-  
 
 * long format
 
@@ -249,6 +244,7 @@ t.test(hr ~ condition,
 library(car)
 library(afex)
 ```
+
 
 
 ```{r}
@@ -263,4 +259,211 @@ aovHR_fitted
 pairs(aovHR_fitted)
 
 ```
+
+
+
+
+**Regression with dummy coding**  
+* nice little conceptual examples for coding predictors and implications for interpretation
+  * http://faculty.cas.usf.edu/mbrannick/regression/anova1.html
+  * http://www.lrdc.pitt.edu/maplelab/slides/Simple_Main_Effects_Fraundorf.pdf  
+
+* use long format
+
+Check data structure    
+```{r}
+str(data_long)
+```
+
+Change condition to a factor
+```{r}
+data_long$condition <-as.factor(data_long$condition)
+str(data_long)
+```
+
+
+Check constrast coding
+* notice "dummy coding" is default
+```{r}
+contrasts(data_long$condition)
+contrasts(data_long$order)
+```
+
+With dummy coding, we typically want our control group or condition as the reference. This doesn't apply to order, but let's change the coding for condition so that passive is coded as 0.
+
+
+```{r}
+contrasts(data_long$condition)=c(1,0)
+```
+
+```{r}
+contrasts(data_long$condition)
+```
+
+For reference, let's print our our cell means for the 2 x 2 of order*condition
+
+```{r}
+library(psych)
+describe(data_long)
+describeBy(data_long,list(data_long$order,data_long$condition))
+```
+
+
+```{r}
+lm_hr_dummy<-lm(hr ~ condition*order, data=data_long)
+summary(lm_hr_dummy)
+```
+
+
+Interpretations  
+* What does the intercept represent?   
+  * Generally, intercept is the mean of DV when all predictors are 0  
+  * We dummy-coded our predictors...  
+  * So intercept is mean HR when cond=0 (passive) and order=0 (active-first), match above? Yep (49.06)  
+  
+* Condition  
+  * Has a 1 after label to indicate the parameter is for the contrast of [1 0], or here [active passive]  
+    * This represents the mean difference of active-passive, ONLY AT THE REFERENCE for the order variable!   
+      * reference: where order=0 (active-first)  
+
+* Order  
+  * label indicates passive-first coded as a 1  
+  * As above, represents mean difference of order conditions, only where the other factor 0 (passive condition)  
+    * Check this for yourself!  
+
+* Interaction  
+  * Generally, an interaction refers to when the difference in conditions for a variable depends on the level of another variable  
+    * In words here, does the effect of condition on hr depend on which condition was first?   
+  * Parameter reflects difference of differences: [level:passive-first](active-passive) -[level:active-first](active-passive)  
+  * Interpretation: HR doesn't seem to depend on order, yay!  
+  
+
+* If we only care about the interaction, this is fine. But if we care about effect of condition regardless or order (e.g., a "main effect" of condition) we don't really that above like we did in the anova. We can change our coding scheme for factors to allow for this though.   
+
+
+**Regression with effect coding**   
+
+For a two-level variable, effect coding assigns levels as 1, -1  
+
+
+Remind ourselves of factor levels
+```{r}
+levels(data_long$condition)
+levels(data_long$order)
+```
+
+
+
+Let's do this for both factors, where -.5 is our control condition if we have one
+```{r}
+contrasts(data_long$condition)=c(.5,-.5)
+contrasts(data_long$order)=c(-.5,.5)
+```
+
+Check!
+```{r}
+contrasts(data_long$condition)
+contrasts(data_long$order)
+```
+
+Run the same regression model, now with effect coded factors..
+```{r}
+lm_hr_effect<-lm(hr ~ condition*order, data=data_long)
+summary(lm_hr_effect)
+```
+
+
+
+Interpretations  
+* What does the intercept represent?   
+  * Generally, intercept is the mean of DV when all predictors are 0  
+  * We effect-coded our predictors...  
+  * So intercept is mean HR when cond=0 (passive) and order=0 (active-first), match above? 
+  * That is now the grand mean across all conditions (60.13)
+  
+* Condition  
+  * Label indicates the parameter is for the contrast of [1 -1], or here [active passive]  
+    * This represents the mean difference of active-passive, now at the MEAN of the order variable
+    * This is like our main effect of condition, regardless of order
+
+* Order  
+  * label indicates contrast for [1 -1]  
+  * As above, represents mean difference of order conditions, holding condition constant at its MEAN
+
+* Interaction  
+  * Same as when we dummy coded...
+  
+
+
+
+**Continuous predictors** 
+
+* Similar to rationale for effect coding, **if** the continous predictor is modeled to interact with the categorical predictors, it usually makes sense to mean-center a continous predictor so that other parameters reflect the effect of that variable at the mean-level of the continous predictor.  
+  * If the continuous predictors are not interacting with the categorical predictors, they're treated more like covariates in parameters.  
+
+
+Example, let's test if hr in the acute sessions is predicted by resting heart rate or cardiorespiratory fitness..   
+
+
+bring these variables in from another .csv
+
+```{r}
+subvariables = read.table("exercise_fileprep-plots-anova_data/subvariables.csv", header=TRUE, sep = ",", fill = TRUE)
+subvariables.k = subvariables %>% select(bike_id,rhr_m0,vo2rel_m0)
+
+data_long <- merge(data_long,subvariables,all.x=TRUE, by="bike_id")
+
+```
+
+
+
+Resting heart rate as a covariate...  
+```{r}
+lm_hr_effect.c<-lm(hr ~ condition*order+rhr_m0, data=data_long)
+summary(lm_hr_effect.c)
+```
+
+Resting heart rate as a covariate WITH mean-centering by z-score scaling...
+
+```{r}
+lm_hr_effect.c<-lm(hr ~ condition*order+scale(rhr_m0), data=data_long)
+summary(lm_hr_effect.c)
+```
+
+
+
+
+Resting heart rate in the interaction...
+* translate what you saw with dummy vs effect coding, why doesn't this make any sense to do when looking at condition and order effects?   
+
+```{r}
+lm_hr_effect.c<-lm(hr ~ condition*order*rhr_m0, data=data_long)
+summary(lm_hr_effect.c)
+```
+
+So this makes more sense if we want resting heart rate in the interaction
+
+```{r}
+lm_hr_effect.c<-lm(hr ~ condition*order*scale(rhr_m0), data=data_long)
+summary(lm_hr_effect.c)
+```
+
+Plot to understand interactions, nifty tool in package jtools
+* https://cran.r-project.org/web/packages/jtools/vignettes/interactions.html
+
+```{r}
+library(jtools)
+```
+
+
+
+```{r}
+interact_plot(lm_hr_effect.c, pred = "rhr_m0", modx = "condition",plot.points = TRUE, data=data_long)
+```
+
+
+Curious about CRF ?
+* What would you predict?
+* Test it!
+
 
