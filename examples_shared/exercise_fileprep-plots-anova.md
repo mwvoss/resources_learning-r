@@ -2,7 +2,17 @@ Examples for common file prep, plotting, and anova
 ================
 Michelle Voss
 
+-   [**Clear previous, load packages**](#clear-previous-load-packages)
+-   [**Referring to variables in a dataset**](#referring-to-variables-in-a-dataset)
+-   [**Reshaping from wide to long**](#reshaping-from-wide-to-long)
+-   [**Plotting to understand the data**](#plotting-to-understand-the-data)
+-   [**Paired t-test**](#paired-t-test)
+-   [**Regression with dummy coding**](#regression-with-dummy-coding)
+-   [**Regression with effect coding**](#regression-with-effect-coding)
+-   [**Continuous predictors**](#continuous-predictors)
+
 **Clear previous, load packages**
+=================================
 
 **This is a "wide format" file with data from our acute exercise manipulation in the bike project**
 \* There are 34 participants, 11 variables
@@ -29,6 +39,7 @@ str(data)
     ##  $ subject_id : Factor w/ 33 levels "GEA161","GEA270",..: 26 31 30 27 28 32 29 33 2 3 ...
 
 **Referring to variables in a dataset**
+=======================================
 
 ``` r
 # change hr to percent for clarity of axes
@@ -40,8 +51,11 @@ data$hr_active <- 100*data$hr_active
 data$hr_passive <- 100*data$hr_passive
 ```
 
-**Reshaping from wide to long** \* Especially for longitudinal data, long format is much "tidyer"
-\* One nugget of info fits in each cell and use columns to label attributes of variable values
+**Reshaping from wide to long**
+===============================
+
+-   Especially for longitudinal data, long format is much "tidyer"
+-   One nugget of info fits in each cell and use columns to label attributes of variable values
 
 ``` r
 # reshape is a function to help transform from wide to long 
@@ -58,9 +72,11 @@ data_long<-reshape(data,
 ```
 
 **Plotting to understand the data**
-\* label your chunk and any figures will be saved in a directory at low-res for rendering on github or sending to colleagues
-\* Histograms and boxplots are nice for initial description
-\* Familiarize with distribution shape (normal or skewed) and anything funky (outliers)
+===================================
+
+-   label your chunk and any figures will be saved in a directory at low-res for rendering on github or sending to colleagues
+-   Histograms and boxplots are nice for initial description
+-   Familiarize with distribution shape (normal or skewed) and anything funky (outliers)
 
 Simple box plot
 \* aes &lt;- aesthetics, basic parameters of what to plot from the dataframe
@@ -184,7 +200,10 @@ ggplot(data_long, aes(x=condition,y=hr,group=bike_id,color=order)) +
 ![](exercise_fileprep-plots-anova_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
 **Paired t-test**
-\* nice little tutorial with graphing supplements \* <https://rcompanion.org/rcompanion/d_09.html>
+=================
+
+-   nice little tutorial with graphing supplements
+-   <https://rcompanion.org/rcompanion/d_09.html>
 
 -   for wide format
 
@@ -340,7 +359,11 @@ pairs(aovHR_fitted)
     ##  active - passive 19.29412 2.75059 32   7.015  <.0001
 
 **Regression with dummy coding**
-\* nice little conceptual examples for coding predictors and implications for interpretation \* <http://faculty.cas.usf.edu/mbrannick/regression/anova1.html> \* <http://www.lrdc.pitt.edu/maplelab/slides/Simple_Main_Effects_Fraundorf.pdf>
+================================
+
+-   nice little conceptual examples for coding predictors and implications for interpretation
+-   <http://faculty.cas.usf.edu/mbrannick/regression/anova1.html>
+-   <http://www.lrdc.pitt.edu/maplelab/slides/Simple_Main_Effects_Fraundorf.pdf>
 
 -   use long format
 
@@ -610,6 +633,7 @@ Interpretations
 -   If we only care about the interaction, this is fine. But if we care about effect of condition regardless or order (e.g., a "main effect" of condition) we don't really that above like we did in the anova. We can change our coding scheme for factors to allow for this though.
 
 **Regression with effect coding**
+=================================
 
 For a two-level variable, effect coding assigns levels as 1, -1
 
@@ -698,6 +722,7 @@ Interpretations
 -   Same as when we dummy coded...
 
 **Continuous predictors**
+=========================
 
 -   Similar to rationale for effect coding, **if** the continous predictor is modeled to interact with the categorical predictors, it usually makes sense to mean-center a continous predictor so that other parameters reflect the effect of that variable at the mean-level of the continous predictor.
 -   If the continuous predictors are not interacting with the categorical predictors, they're treated more like covariates in parameters.
