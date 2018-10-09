@@ -2,16 +2,10 @@
 title: "Examples for common file prep, plotting, and anova"
 author: "Michelle Voss"
 output:
-  html_document:
-    toc: true
-    toc_float: true
-    keep_md: yes
-  output:
   github_document:
     toc: true
-    toc_depth: 2
-  pdf_document: default
-    
+    html_preview: false
+
 ---
 
 
