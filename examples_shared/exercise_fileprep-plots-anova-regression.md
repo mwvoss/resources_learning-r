@@ -584,6 +584,9 @@ describeBy(data_long,list(data_long$order,data_long$condition))
     ## fs          -0.02    -1.28  0.36
     ## fas          0.82    -0.39  0.23
 
+Resources comparing anova and regression
+\* <https://m-clark.github.io/docs/mixedModels/anovamixed.html> \* mixed model generally: <https://gkhajduk.github.io/2017-03-09-mixed-models/>
+
 ``` r
 # set bike_id as a factor since repeated measures are grouped by subject
 data_long$bike_id <- as.factor(data_long$bike_id)

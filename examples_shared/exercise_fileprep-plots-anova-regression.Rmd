@@ -306,6 +306,10 @@ describe(data_long)
 describeBy(data_long,list(data_long$order,data_long$condition))
 ```
 
+Resources comparing anova and regression   
+* https://m-clark.github.io/docs/mixedModels/anovamixed.html
+* mixed model generally: https://gkhajduk.github.io/2017-03-09-mixed-models/   
+
 
 ```{r}
 # set bike_id as a factor since repeated measures are grouped by subject
@@ -316,7 +320,7 @@ lm_hr_dummy<-lmer(hr ~ condition*order + (1|bike_id), data=data_long)
 summary(lm_hr_dummy)
 ```
 
-Below is an example of formatting the model results that is better for presentation. If you replace "text" with "html" then stargazer will save the table in an .html format, which you can then open in word to copy/paste the formatted table into your results tables.
+Below is an example of formatting the model results that is better for presentation. If you replace "text" with "html" then stargazer will save the table in an .html format, which you can then open in word to copy/paste the formatted table into your results tables.  
 ```{r}
 class(lm_hr_dummy) <- "lmerMod"
 stargazer(lm_hr_dummy,type="text",
@@ -492,9 +496,10 @@ interact_plot(lm_hr_effect.c, pred = "rhr_m0", modx = "condition",plot.points = 
 ```
 
 
-Curious about CRF ?  
-* What would you predict?  
-* Test it!  
+Curious about CRF ?    
+* What would you predict?    
+* Test it!   
+
 
 
 
