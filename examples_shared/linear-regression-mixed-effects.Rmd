@@ -1,0 +1,61 @@
+---
+title: "Linear mixed effects models"
+author: "Michelle Voss"
+output:
+  github_document:
+    toc: true
+    toc_depth: 1
+    html_preview: false
+
+---
+
+
+# Random effects 
+* Online tutorial: http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf
+* In our models above, we have two repeated measures (order, condition)
+* The regression doesn't know they're repeated, can we account for this?
+* Adding a random effect for subject would allow for each subject to have their own baseline of hr
+  * random intercept: each subject would get their own intercept (random effect) that deviates by some amount from the overall group effect (fixed effect). This helps us account for the fact that observations from the same subject tend to look more alike and aren't totally independent.   
+
+```{r}
+data_long$bike_id <- as.factor(data_long$bike_id)
+```
+
+After reading tutorial, look at output of this model: 
+```{r}
+lmer_hr_effect.c <- lmer(hr ~ condition*order*scale(rhr_m0) + (1 | bike_id), 
+  data = data_long)
+summary(lmer_hr_effect.c) 
+``````
+
+
+```{r}
+coef(lmer_hr_effect.c)
+```
+
+
+
+Ask ourselves: would the residual in random effects be bigger if we take out the order effect or the condition effect?
+
+Compare:
+```{r}
+lmer_hr_effect.c <- lmer(hr ~ condition*scale(rhr_m0) + (1 | bike_id), 
+  data = data_long)
+summary(lmer_hr_effect.c) 
+```
+
+
+
+
+```{r}
+lmer_hr_effect.c <- lmer(hr ~ order*scale(rhr_m0) + (1 | bike_id), 
+  data = data_long)
+summary(lmer_hr_effect.c) 
+```
+
+
+
+But still, subject not randomly varying...because each subject only has one observation of each cell. 
+* Better example for random effects?
+
+

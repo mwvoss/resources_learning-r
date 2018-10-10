@@ -1,4 +1,4 @@
-Examples for common file prep, plotting, and anova
+Examples for common file prep, plotting, anova, and regression
 ================
 Michelle Voss
 

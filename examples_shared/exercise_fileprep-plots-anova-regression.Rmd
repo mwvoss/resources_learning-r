@@ -1,5 +1,5 @@
 ---
-title: "Examples for common file prep, plotting, and anova"
+title: "Examples for common file prep, plotting, anova, and regression"
 author: "Michelle Voss"
 output:
   github_document:
@@ -461,5 +461,11 @@ interact_plot(lm_hr_effect.c, pred = "rhr_m0", modx = "condition",plot.points = 
 Curious about CRF ?
 * What would you predict?
 * Test it!
+
+
+
+
+
+
 
 
