@@ -20,6 +20,7 @@ rm(list=ls(all=TRUE))
 library(knitr)
 library(reshape2)
 library(tidyverse)
+library(stargazer)
 
 R.Version()
 getwd()
@@ -236,7 +237,6 @@ t.test(hr ~ condition,
 ```{r warning=FALSE}
 
 # does hr difference by condition also interact with order of sessions?
-
 library(car)
 library(afex)
 ```
@@ -297,6 +297,8 @@ contrasts(data_long$condition)
 ```
 
 For reference, let's print our our cell means for the 2 x 2 of order*condition
+* also see stargazer as a tool for outputting nice tables of descriptives that can be directly copied into a word doc  
+  * https://www.jakeruss.com/cheatsheets/stargazer/
 
 ```{r}
 library(psych)
@@ -306,10 +308,23 @@ describeBy(data_long,list(data_long$order,data_long$condition))
 
 
 ```{r}
-lm_hr_dummy<-lm(hr ~ condition*order, data=data_long)
+# set bike_id as a factor since repeated measures are grouped by subject
+data_long$bike_id <- as.factor(data_long$bike_id)
+
+# the (1 | bike_id) text below helps account for the fact that there are repeated measures for subject
+lm_hr_dummy<-lmer(hr ~ condition*order + (1|bike_id), data=data_long)
 summary(lm_hr_dummy)
 ```
 
+Below is an example of formatting the model results that is better for presentation. If you replace "text" with "html" then stargazer will save the table in an .html format, which you can then open in word to copy/paste the formatted table into your results tables.
+```{r}
+class(lm_hr_dummy) <- "lmerMod"
+stargazer(lm_hr_dummy,type="text",
+          dep.var.labels=c("%HRR during exercise"),
+          covariate.labels = c("Intercept","Condition","Order","Condition*Order"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          intercept.bottom = FALSE)
+```
 
 Interpretations  
 * What does the intercept represent?   
@@ -364,30 +379,30 @@ contrasts(data_long$order)
 
 Run the same regression model, now with effect coded factors..
 ```{r}
-lm_hr_effect<-lm(hr ~ condition*order, data=data_long)
+lm_hr_effect<-lmer(hr ~ condition*order + (1|bike_id), data=data_long)
 summary(lm_hr_effect)
 ```
 
 
 
-Interpretations  
-* What does the intercept represent?   
-  * Generally, intercept is the mean of DV when all predictors are 0  
-  * We effect-coded our predictors...  
-  * So intercept is mean HR when cond=0 (passive) and order=0 (active-first), match above? 
-  * That is now the grand mean across all conditions (60.13)
-  
-* Condition  
-  * Label indicates the parameter is for the contrast of [1 -1], or here [active passive]  
-    * This represents the mean difference of active-passive, now at the MEAN of the order variable
-    * This is like our main effect of condition, regardless of order
+Interpretations      
+* What does the intercept represent?         
+  * Generally, intercept is the mean of DV when all predictors are 0     
+  * We effect-coded our predictors...        
+  * So intercept is mean HR when cond=0 (passive) and order=0 (active-first), match above?     
+  * That is now the grand mean across all conditions (60.13)    
+    
+* Condition       
+  * Label indicates the parameter is for the contrast of [1 -1], or here [active passive]      
+    * This represents the mean difference of active-passive, now at the MEAN of the order variable    
+    * This is like our main effect of condition, regardless of order    
 
-* Order  
-  * label indicates contrast for [1 -1]  
-  * As above, represents mean difference of order conditions, holding condition constant at its MEAN
+* Order    
+  * label indicates contrast for [1 -1]    
+  * As above, represents mean difference of order conditions, holding condition constant at its MEAN  
 
-* Interaction  
-  * Same as when we dummy coded...
+* Interaction    
+  * Same as when we dummy coded...  
   
 
 
@@ -415,36 +430,56 @@ data_long <- merge(data_long,subvariables,all.x=TRUE, by="bike_id")
 
 Resting heart rate as a covariate...  
 ```{r}
-lm_hr_effect.c<-lm(hr ~ condition*order+rhr_m0, data=data_long)
+lm_hr_effect.c<-lmer(hr ~ condition*order+rhr_m0 + (1|bike_id), data=data_long)
 summary(lm_hr_effect.c)
 ```
 
 Resting heart rate as a covariate WITH mean-centering by z-score scaling...
 
 ```{r}
-lm_hr_effect.c<-lm(hr ~ condition*order+scale(rhr_m0), data=data_long)
+lm_hr_effect.c<-lmer(hr ~ condition*order+scale(rhr_m0) + (1|bike_id), data=data_long)
 summary(lm_hr_effect.c)
 ```
 
 
 
 
-Resting heart rate in the interaction...
-* translate what you saw with dummy vs effect coding, why doesn't this make any sense to do when looking at condition and order effects?   
+Resting heart rate in the interaction...  
+* translate what you saw with dummy vs effect coding, why doesn't this make any sense to do when looking at condition and order effects?     
 
 ```{r}
-lm_hr_effect.c<-lm(hr ~ condition*order*rhr_m0, data=data_long)
+lm_hr_effect.c<-lmer(hr ~ condition*order*rhr_m0 + (1|bike_id), data=data_long)
 summary(lm_hr_effect.c)
 ```
 
 So this makes more sense if we want resting heart rate in the interaction
 
 ```{r}
-lm_hr_effect.c<-lm(hr ~ condition*order*scale(rhr_m0), data=data_long)
+lm_hr_effect.c<-lmer(hr ~ condition*order*scale(rhr_m0)+ (1|bike_id), data=data_long)
 summary(lm_hr_effect.c)
 ```
 
-Plot to understand interactions, nifty tool in package jtools
+
+Reporting regression results  
+
+Often good to include a full table of beta parameters. Stargazer is a nice tool to help with this:
+* https://www.jakeruss.com/cheatsheets/stargazer/ 
+* https://www.princeton.edu/~otorres/NiceOutputR.pdf
+
+```{r}
+
+# use this for lmer models
+class(lm_hr_effect.c) <- "lmerMod"
+
+stargazer(lm_hr_effect.c,type="text",
+          dep.var.labels=c("%HRR during exercise"),
+          covariate.labels = c("Intercept", "Condition","Order","Resting HR (RHR)","Condition*Order","Condition*RHR","Order*RHR","Condition*Order*RHR"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          intercept.bottom = FALSE)
+```
+
+
+Plot to understand interactions, nifty tool in package jtools  
 * https://cran.r-project.org/web/packages/jtools/vignettes/interactions.html
 
 ```{r}
@@ -452,15 +487,14 @@ library(jtools)
 ```
 
 
-
 ```{r}
 interact_plot(lm_hr_effect.c, pred = "rhr_m0", modx = "condition",plot.points = TRUE, data=data_long)
 ```
 
 
-Curious about CRF ?
-* What would you predict?
-* Test it!
+Curious about CRF ?  
+* What would you predict?  
+* Test it!  
 
 
 

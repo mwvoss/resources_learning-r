@@ -94,7 +94,7 @@ ggplot(data_long, aes(x=condition,y=hr,fill=condition)) +
   labs(title="Acute Phase Intensity",y="%HRmax",x="",fill="Condition") 
 ```
 
-![](exercise_fileprep-plots-anova_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](exercise_fileprep-plots-anova-regression_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 **GGplot is powerful and can help you add a lot of information to a plot like below**
 
@@ -120,7 +120,7 @@ ggplot(data_long, aes(x=condition,y=hr,fill=condition)) +
         legend.title = element_text(size=15))
 ```
 
-![](exercise_fileprep-plots-anova_files/figure-markdown_github/acute-hr-1.png)
+![](exercise_fileprep-plots-anova-regression_files/figure-markdown_github/acute-hr-1.png)
 
 ``` r
 # save a high-resolution file in your directory for pub-level figures
@@ -156,7 +156,7 @@ ggplot(data = data_long, aes(x = condition, y = hr)) +
     ## Scale for 'y' is already present. Adding another scale for 'y', which
     ## will replace the existing scale.
 
-![](exercise_fileprep-plots-anova_files/figure-markdown_github/unnamed-chunk-6-1.png)
+![](exercise_fileprep-plots-anova-regression_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
 **Show individuals on one plot**
 
@@ -167,7 +167,7 @@ ggplot(data_long, aes(x=condition,y=hr,group=bike_id,color=order)) +
   labs(title="Acute Phase Intensity",y="%HRmax")
 ```
 
-![](exercise_fileprep-plots-anova_files/figure-markdown_github/unnamed-chunk-7-1.png)
+![](exercise_fileprep-plots-anova-regression_files/figure-markdown_github/unnamed-chunk-7-1.png)
 
 **Power of facet wrap to plot by a factor**
 \* by variable factor
@@ -186,7 +186,7 @@ ggplot(data_long, aes(x=condition,y=hr,group=bike_id,color=order)) +
         strip.background = element_rect(colour="black", size=1))
 ```
 
-![](exercise_fileprep-plots-anova_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](exercise_fileprep-plots-anova-regression_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
 -   by subject
 
@@ -197,7 +197,7 @@ ggplot(data_long, aes(x=condition,y=hr,group=bike_id,color=order)) +
   facet_wrap(~bike_id)
 ```
 
-![](exercise_fileprep-plots-anova_files/figure-markdown_github/unnamed-chunk-9-1.png)
+![](exercise_fileprep-plots-anova-regression_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
 **Paired t-test**
 =================
@@ -255,7 +255,6 @@ t.test(hr ~ condition,
 
 ``` r
 # does hr difference by condition also interact with order of sessions?
-
 library(car)
 ```
 
@@ -454,7 +453,8 @@ contrasts(data_long$condition)
     ## active     1
     ## passive    0
 
-For reference, let's print our our cell means for the 2 x 2 of order\*condition
+For reference, let's print our our cell means for the 2 x 2 of order*condition * also see stargazer as a tool for outputting nice tables of descriptives that can be directly copied into a word doc
+\* <https://www.jakeruss.com/cheatsheets/stargazer/>
 
 ``` r
 library(psych)
@@ -585,30 +585,87 @@ describeBy(data_long,list(data_long$order,data_long$condition))
     ## fas          0.82    -0.39  0.23
 
 ``` r
-lm_hr_dummy<-lm(hr ~ condition*order, data=data_long)
+# set bike_id as a factor since repeated measures are grouped by subject
+data_long$bike_id <- as.factor(data_long$bike_id)
+
+# the (1 | bike_id) text below helps account for the fact that there are repeated measures for subject
+lm_hr_dummy<-lmer(hr ~ condition*order + (1|bike_id), data=data_long)
 summary(lm_hr_dummy)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: hr ~ condition * order + (1 | bike_id)
+    ##    Data: data_long
     ## 
-    ## Call:
-    ## lm(formula = hr ~ condition * order, data = data_long)
+    ## REML criterion at convergence: 459.9
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -18.0588  -3.7059   0.1765   2.4118  25.9412 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.2347 -0.4745  0.0135  0.2972  3.2087 
     ## 
-    ## Coefficients:
-    ##                               Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)                     49.059      1.952  25.129  < 2e-16 ***
-    ## condition1                      22.529      2.761   8.160 1.68e-11 ***
-    ## orderpassive-first               1.235      2.761   0.447    0.656    
-    ## condition1:orderpassive-first   -3.235      3.905  -0.829    0.410    
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  bike_id  (Intercept)  0.4835  0.6953  
+    ##  Residual             64.3088  8.0193  
+    ## Number of obs: 68, groups:  bike_id, 34
+    ## 
+    ## Fixed effects:
+    ##                               Estimate Std. Error     df t value Pr(>|t|)
+    ## (Intercept)                     49.059      1.952 64.000  25.129  < 2e-16
+    ## condition1                      22.529      2.751 32.000   8.191 2.35e-09
+    ## orderpassive-first               1.235      2.761 64.000   0.447    0.656
+    ## condition1:orderpassive-first   -3.235      3.890 32.000  -0.832    0.412
+    ##                                  
+    ## (Intercept)                   ***
+    ## condition1                    ***
+    ## orderpassive-first               
+    ## condition1:orderpassive-first    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 8.049 on 64 degrees of freedom
-    ## Multiple R-squared:  0.6434, Adjusted R-squared:  0.6267 
-    ## F-statistic: 38.49 on 3 and 64 DF,  p-value: 2.446e-14
+    ## Correlation of Fixed Effects:
+    ##             (Intr) cndtn1 ordrp-
+    ## condition1  -0.704              
+    ## ordrpssv-fr -0.707  0.498       
+    ## cndtn1:rdr-  0.498 -0.707 -0.704
+
+Below is an example of formatting the model results that is better for presentation. If you replace "text" with "html" then stargazer will save the table in an .html format, which you can then open in word to copy/paste the formatted table into your results tables.
+
+``` r
+class(lm_hr_dummy) <- "lmerMod"
+stargazer(lm_hr_dummy,type="text",
+          dep.var.labels=c("%HRR during exercise"),
+          covariate.labels = c("Intercept","Condition","Order","Condition*Order"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          intercept.bottom = FALSE)
+```
+
+    ## 
+    ## =================================================
+    ##                          Dependent variable:     
+    ##                     -----------------------------
+    ##                         %HRR during exercise     
+    ## -------------------------------------------------
+    ## Intercept                     49.059***          
+    ##                                (1.952)           
+    ##                                                  
+    ## Condition                     22.529***          
+    ##                                (2.751)           
+    ##                                                  
+    ## Order                           1.235            
+    ##                                (2.761)           
+    ##                                                  
+    ## Condition*Order                -3.235            
+    ##                                (3.890)           
+    ##                                                  
+    ## -------------------------------------------------
+    ## Observations                     68              
+    ## Log Likelihood                -229.956           
+    ## Akaike Inf. Crit.              471.911           
+    ## Bayesian Inf. Crit.            485.228           
+    ## =================================================
+    ## Note:               *p<0.05; **p<0.01; ***p<0.001
 
 Interpretations
 \* What does the intercept represent?
@@ -679,36 +736,48 @@ contrasts(data_long$order)
 Run the same regression model, now with effect coded factors..
 
 ``` r
-lm_hr_effect<-lm(hr ~ condition*order, data=data_long)
+lm_hr_effect<-lmer(hr ~ condition*order + (1|bike_id), data=data_long)
 summary(lm_hr_effect)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: hr ~ condition * order + (1 | bike_id)
+    ##    Data: data_long
     ## 
-    ## Call:
-    ## lm(formula = hr ~ condition * order, data = data_long)
+    ## REML criterion at convergence: 459.9
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -18.0588  -3.7059   0.1765   2.4118  25.9412 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.2347 -0.4745  0.0135  0.2972  3.2087 
     ## 
-    ## Coefficients:
-    ##                   Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)        60.1324     0.9761  61.603  < 2e-16 ***
-    ## condition1         20.9118     1.9523  10.712 6.56e-16 ***
-    ## order1             -0.3824     1.9523  -0.196    0.845    
-    ## condition1:order1  -3.2353     3.9045  -0.829    0.410    
+    ## Random effects:
+    ##  Groups   Name        Variance Std.Dev.
+    ##  bike_id  (Intercept)  0.4835  0.6953  
+    ##  Residual             64.3088  8.0193  
+    ## Number of obs: 68, groups:  bike_id, 34
+    ## 
+    ## Fixed effects:
+    ##                   Estimate Std. Error      df t value Pr(>|t|)    
+    ## (Intercept)        60.1324     0.9798 32.0000  61.374  < 2e-16 ***
+    ## condition1         20.9118     1.9450 32.0000  10.752 3.74e-12 ***
+    ## order1             -0.3824     1.9595 32.0000  -0.195    0.847    
+    ## condition1:order1  -3.2353     3.8899 32.0000  -0.832    0.412    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 8.049 on 64 degrees of freedom
-    ## Multiple R-squared:  0.6434, Adjusted R-squared:  0.6267 
-    ## F-statistic: 38.49 on 3 and 64 DF,  p-value: 2.446e-14
+    ## Correlation of Fixed Effects:
+    ##             (Intr) cndtn1 order1
+    ## condition1  0.000               
+    ## order1      0.000  0.000        
+    ## cndtn1:rdr1 0.000  0.000  0.000
 
 Interpretations
 \* What does the intercept represent?
 \* Generally, intercept is the mean of DV when all predictors are 0
 \* We effect-coded our predictors...
-\* So intercept is mean HR when cond=0 (passive) and order=0 (active-first), match above? \* That is now the grand mean across all conditions (60.13)
+\* So intercept is mean HR when cond=0 (passive) and order=0 (active-first), match above?
+\* That is now the grand mean across all conditions (60.13)
 
 -   Condition
 -   Label indicates the parameter is for the contrast of \[1 -1\], or here \[active passive\]
@@ -741,126 +810,244 @@ data_long <- merge(data_long,subvariables,all.x=TRUE, by="bike_id")
 Resting heart rate as a covariate...
 
 ``` r
-lm_hr_effect.c<-lm(hr ~ condition*order+rhr_m0, data=data_long)
+lm_hr_effect.c<-lmer(hr ~ condition*order+rhr_m0 + (1|bike_id), data=data_long)
 summary(lm_hr_effect.c)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: hr ~ condition * order + rhr_m0 + (1 | bike_id)
+    ##    Data: data_long
     ## 
-    ## Call:
-    ## lm(formula = hr ~ condition * order + rhr_m0, data = data_long)
+    ## REML criterion at convergence: 456.3
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -14.2661  -3.8459  -0.9745   2.5566  26.2988 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.8479 -0.4982 -0.1262  0.3312  3.4065 
     ## 
-    ## Coefficients:
-    ##                   Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)        42.6098     6.8970   6.178 5.28e-08 ***
-    ## condition1         20.9118     1.8724  11.168  < 2e-16 ***
-    ## order1             -1.0195     1.8888  -0.540   0.5913    
-    ## rhr_m0              0.2579     0.1006   2.564   0.0127 *  
-    ## condition1:order1  -3.2353     3.7448  -0.864   0.3909    
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  bike_id  (Intercept) 5.228e-13 7.23e-07
+    ##  Residual             5.960e+01 7.72e+00
+    ## Number of obs: 68, groups:  bike_id, 34
+    ## 
+    ## Fixed effects:
+    ##                   Estimate Std. Error      df t value Pr(>|t|)    
+    ## (Intercept)        42.6098     6.8970 63.0000   6.178 5.28e-08 ***
+    ## condition1         20.9118     1.8724 63.0000  11.168  < 2e-16 ***
+    ## order1             -1.0195     1.8888 63.0000  -0.540   0.5913    
+    ## rhr_m0              0.2579     0.1006 63.0000   2.564   0.0127 *  
+    ## condition1:order1  -3.2353     3.7448 63.0000  -0.864   0.3909    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 7.72 on 63 degrees of freedom
-    ## Multiple R-squared:  0.6771, Adjusted R-squared:  0.6566 
-    ## F-statistic: 33.02 on 4 and 63 DF,  p-value: 7.676e-15
+    ## Correlation of Fixed Effects:
+    ##             (Intr) cndtn1 order1 rhr_m0
+    ## condition1   0.000                     
+    ## order1       0.130  0.000              
+    ## rhr_m0      -0.991  0.000 -0.132       
+    ## cndtn1:rdr1  0.000  0.000  0.000  0.000
 
 Resting heart rate as a covariate WITH mean-centering by z-score scaling...
 
 ``` r
-lm_hr_effect.c<-lm(hr ~ condition*order+scale(rhr_m0), data=data_long)
+lm_hr_effect.c<-lmer(hr ~ condition*order+scale(rhr_m0) + (1|bike_id), data=data_long)
 summary(lm_hr_effect.c)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: hr ~ condition * order + scale(rhr_m0) + (1 | bike_id)
+    ##    Data: data_long
     ## 
-    ## Call:
-    ## lm(formula = hr ~ condition * order + scale(rhr_m0), data = data_long)
+    ## REML criterion at convergence: 451.8
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -14.2661  -3.8459  -0.9745   2.5566  26.2988 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.8479 -0.4982 -0.1262  0.3312  3.4065 
     ## 
-    ## Coefficients:
-    ##                   Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)        60.1324     0.9362  64.230   <2e-16 ***
-    ## condition1         20.9118     1.8724  11.168   <2e-16 ***
-    ## order1             -1.0195     1.8888  -0.540   0.5913    
-    ## scale(rhr_m0)       2.4398     0.9514   2.564   0.0127 *  
-    ## condition1:order1  -3.2353     3.7448  -0.864   0.3909    
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev.
+    ##  bike_id  (Intercept) 5.228e-13 7.23e-07
+    ##  Residual             5.960e+01 7.72e+00
+    ## Number of obs: 68, groups:  bike_id, 34
+    ## 
+    ## Fixed effects:
+    ##                   Estimate Std. Error      df t value Pr(>|t|)    
+    ## (Intercept)        60.1324     0.9362 63.0000  64.230   <2e-16 ***
+    ## condition1         20.9118     1.8724 63.0000  11.168   <2e-16 ***
+    ## order1             -1.0195     1.8888 63.0000  -0.540   0.5913    
+    ## scale(rhr_m0)       2.4398     0.9514 63.0000   2.564   0.0127 *  
+    ## condition1:order1  -3.2353     3.7448 63.0000  -0.864   0.3909    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 7.72 on 63 degrees of freedom
-    ## Multiple R-squared:  0.6771, Adjusted R-squared:  0.6566 
-    ## F-statistic: 33.02 on 4 and 63 DF,  p-value: 7.676e-15
+    ## Correlation of Fixed Effects:
+    ##             (Intr) cndtn1 order1 sc(_0)
+    ## condition1   0.000                     
+    ## order1       0.000  0.000              
+    ## scl(rhr_m0)  0.000  0.000 -0.132       
+    ## cndtn1:rdr1  0.000  0.000  0.000  0.000
 
-Resting heart rate in the interaction... \* translate what you saw with dummy vs effect coding, why doesn't this make any sense to do when looking at condition and order effects?
+Resting heart rate in the interaction...
+\* translate what you saw with dummy vs effect coding, why doesn't this make any sense to do when looking at condition and order effects?
 
 ``` r
-lm_hr_effect.c<-lm(hr ~ condition*order*rhr_m0, data=data_long)
+lm_hr_effect.c<-lmer(hr ~ condition*order*rhr_m0 + (1|bike_id), data=data_long)
 summary(lm_hr_effect.c)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: hr ~ condition * order * rhr_m0 + (1 | bike_id)
+    ##    Data: data_long
     ## 
-    ## Call:
-    ## lm(formula = hr ~ condition * order * rhr_m0, data = data_long)
+    ## REML criterion at convergence: 455.4
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -12.3343  -3.4344  -0.1019   1.6876  27.9124 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.6039 -0.4466 -0.0132  0.2195  3.6296 
     ## 
-    ## Coefficients:
-    ##                          Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)              41.58681    7.14403   5.821 2.44e-07 ***
-    ## condition1               45.69995   14.28806   3.198  0.00221 ** 
-    ## order1                   -8.41755   14.28806  -0.589  0.55798    
-    ## rhr_m0                    0.27198    0.10374   2.622  0.01107 *  
-    ## condition1:order1         0.58758   28.57613   0.021  0.98366    
-    ## condition1:rhr_m0        -0.36446    0.20749  -1.757  0.08410 .  
-    ## order1:rhr_m0             0.10838    0.20749   0.522  0.60337    
-    ## condition1:order1:rhr_m0 -0.04301    0.41498  -0.104  0.91779    
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev. 
+    ##  bike_id  (Intercept) 8.104e-13 9.002e-07
+    ##  Residual             5.914e+01 7.690e+00
+    ## Number of obs: 68, groups:  bike_id, 34
+    ## 
+    ## Fixed effects:
+    ##                          Estimate Std. Error       df t value Pr(>|t|)    
+    ## (Intercept)              41.58681    7.14403 60.00000   5.821 2.44e-07 ***
+    ## condition1               45.69995   14.28806 60.00000   3.198  0.00221 ** 
+    ## order1                   -8.41755   14.28806 60.00000  -0.589  0.55798    
+    ## rhr_m0                    0.27198    0.10374 60.00000   2.622  0.01107 *  
+    ## condition1:order1         0.58758   28.57613 60.00000   0.021  0.98366    
+    ## condition1:rhr_m0        -0.36446    0.20749 60.00000  -1.757  0.08410 .  
+    ## order1:rhr_m0             0.10838    0.20749 60.00000   0.522  0.60337    
+    ## condition1:order1:rhr_m0 -0.04301    0.41498 60.00000  -0.104  0.91779    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 7.69 on 60 degrees of freedom
-    ## Multiple R-squared:  0.6948, Adjusted R-squared:  0.6592 
-    ## F-statistic: 19.52 on 7 and 60 DF,  p-value: 2.446e-13
+    ## Correlation of Fixed Effects:
+    ##             (Intr) cndtn1 order1 rhr_m0 cnd1:1 cn1:_0 or1:_0
+    ## condition1   0.000                                          
+    ## order1       0.288  0.000                                   
+    ## rhr_m0      -0.991  0.000 -0.274                            
+    ## cndtn1:rdr1  0.000  0.288  0.000  0.000                     
+    ## cndtn1:rh_0  0.000 -0.991  0.000  0.000 -0.274              
+    ## ordr1:rhr_0 -0.274  0.000 -0.991  0.260  0.000  0.000       
+    ## cndtn1:1:_0  0.000 -0.274  0.000  0.000 -0.991  0.260  0.000
 
 So this makes more sense if we want resting heart rate in the interaction
 
 ``` r
-lm_hr_effect.c<-lm(hr ~ condition*order*scale(rhr_m0), data=data_long)
+lm_hr_effect.c<-lmer(hr ~ condition*order*scale(rhr_m0)+ (1|bike_id), data=data_long)
 summary(lm_hr_effect.c)
 ```
 
+    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
+    ##   to degrees of freedom [lmerMod]
+    ## Formula: hr ~ condition * order * scale(rhr_m0) + (1 | bike_id)
+    ##    Data: data_long
     ## 
-    ## Call:
-    ## lm(formula = hr ~ condition * order * scale(rhr_m0), data = data_long)
+    ## REML criterion at convergence: 437.5
     ## 
-    ## Residuals:
-    ##      Min       1Q   Median       3Q      Max 
-    ## -12.3343  -3.4344  -0.1019   1.6876  27.9124 
+    ## Scaled residuals: 
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.6039 -0.4466 -0.0132  0.2195  3.6296 
     ## 
-    ## Coefficients:
-    ##                                 Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)                      60.0654     0.9413  63.809  < 2e-16 ***
-    ## condition1                       20.9383     1.8827  11.122 3.28e-16 ***
-    ## order1                           -1.0543     1.8827  -0.560   0.5776    
-    ## scale(rhr_m0)                     2.5729     0.9814   2.622   0.0111 *  
-    ## condition1:order1                -2.3349     3.7653  -0.620   0.5375    
-    ## condition1:scale(rhr_m0)         -3.4477     1.9628  -1.757   0.0841 .  
-    ## order1:scale(rhr_m0)              1.0252     1.9628   0.522   0.6034    
-    ## condition1:order1:scale(rhr_m0)  -0.4069     3.9256  -0.104   0.9178    
+    ## Random effects:
+    ##  Groups   Name        Variance  Std.Dev. 
+    ##  bike_id  (Intercept) 1.918e-16 1.385e-08
+    ##  Residual             5.914e+01 7.690e+00
+    ## Number of obs: 68, groups:  bike_id, 34
+    ## 
+    ## Fixed effects:
+    ##                                 Estimate Std. Error      df t value
+    ## (Intercept)                      60.0654     0.9413 60.0000  63.809
+    ## condition1                       20.9383     1.8827 60.0000  11.122
+    ## order1                           -1.0543     1.8827 60.0000  -0.560
+    ## scale(rhr_m0)                     2.5729     0.9814 60.0000   2.622
+    ## condition1:order1                -2.3349     3.7653 60.0000  -0.620
+    ## condition1:scale(rhr_m0)         -3.4477     1.9628 60.0000  -1.757
+    ## order1:scale(rhr_m0)              1.0252     1.9628 60.0000   0.522
+    ## condition1:order1:scale(rhr_m0)  -0.4069     3.9256 60.0000  -0.104
+    ##                                 Pr(>|t|)    
+    ## (Intercept)                      < 2e-16 ***
+    ## condition1                      4.44e-16 ***
+    ## order1                            0.5776    
+    ## scale(rhr_m0)                     0.0111 *  
+    ## condition1:order1                 0.5375    
+    ## condition1:scale(rhr_m0)          0.0841 .  
+    ## order1:scale(rhr_m0)              0.6034    
+    ## condition1:order1:scale(rhr_m0)   0.9178    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 7.69 on 60 degrees of freedom
-    ## Multiple R-squared:  0.6948, Adjusted R-squared:  0.6592 
-    ## F-statistic: 19.52 on 7 and 60 DF,  p-value: 2.446e-13
+    ## Correlation of Fixed Effects:
+    ##             (Intr) cndtn1 order1 sc(_0) cnd1:1 c1:(_0 o1:(_0
+    ## condition1   0.000                                          
+    ## order1       0.005  0.000                                   
+    ## scl(rhr_m0) -0.035  0.000 -0.136                            
+    ## cndtn1:rdr1  0.000  0.005  0.000  0.000                     
+    ## cndtn1:(_0)  0.000 -0.035  0.000  0.000 -0.136              
+    ## ordr1:s(_0) -0.136  0.000 -0.035  0.260  0.000  0.000       
+    ## cnd1:1:(_0)  0.000 -0.136  0.000  0.000 -0.035  0.260  0.000
 
-Plot to understand interactions, nifty tool in package jtools \* <https://cran.r-project.org/web/packages/jtools/vignettes/interactions.html>
+Reporting regression results
+
+Often good to include a full table of beta parameters. Stargazer is a nice tool to help with this: \* <https://www.jakeruss.com/cheatsheets/stargazer/> \* <https://www.princeton.edu/~otorres/NiceOutputR.pdf>
+
+``` r
+# use this for lmer models
+class(lm_hr_effect.c) <- "lmerMod"
+
+stargazer(lm_hr_effect.c,type="text",
+          dep.var.labels=c("%HRR during exercise"),
+          covariate.labels = c("Intercept", "Condition","Order","Resting HR (RHR)","Condition*Order","Condition*RHR","Order*RHR","Condition*Order*RHR"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          intercept.bottom = FALSE)
+```
+
+    ## 
+    ## =================================================
+    ##                          Dependent variable:     
+    ##                     -----------------------------
+    ##                         %HRR during exercise     
+    ## -------------------------------------------------
+    ## Intercept                     60.065***          
+    ##                                (0.941)           
+    ##                                                  
+    ## Condition                     20.938***          
+    ##                                (1.883)           
+    ##                                                  
+    ## Order                          -1.054            
+    ##                                (1.883)           
+    ##                                                  
+    ## Resting HR (RHR)               2.573**           
+    ##                                (0.981)           
+    ##                                                  
+    ## Condition*Order                -2.335            
+    ##                                (3.765)           
+    ##                                                  
+    ## Condition*RHR                  -3.448            
+    ##                                (1.963)           
+    ##                                                  
+    ## Order*RHR                       1.025            
+    ##                                (1.963)           
+    ##                                                  
+    ## Condition*Order*RHR            -0.407            
+    ##                                (3.926)           
+    ##                                                  
+    ## -------------------------------------------------
+    ## Observations                     68              
+    ## Log Likelihood                -218.731           
+    ## Akaike Inf. Crit.              457.463           
+    ## Bayesian Inf. Crit.            479.658           
+    ## =================================================
+    ## Note:               *p<0.05; **p<0.01; ***p<0.001
+
+Plot to understand interactions, nifty tool in package jtools
+\* <https://cran.r-project.org/web/packages/jtools/vignettes/interactions.html>
 
 ``` r
 library(jtools)
@@ -870,6 +1057,8 @@ library(jtools)
 interact_plot(lm_hr_effect.c, pred = "rhr_m0", modx = "condition",plot.points = TRUE, data=data_long)
 ```
 
-![](exercise_fileprep-plots-anova_files/figure-markdown_github/unnamed-chunk-31-1.png)
+![](exercise_fileprep-plots-anova-regression_files/figure-markdown_github/unnamed-chunk-33-1.png)
 
-Curious about CRF ? \* What would you predict? \* Test it!
+Curious about CRF ?
+\* What would you predict?
+\* Test it!
