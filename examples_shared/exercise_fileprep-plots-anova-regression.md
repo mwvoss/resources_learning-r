@@ -895,6 +895,7 @@ stargazer(lm_hr_effect,lm_rpe_effect ,type="text",
 
 ``` r
 # change to html to save a file as output in the current directory
+# open this html file in microsoft word and you'll have a table you can copy to manuscript doc
 stargazer(lm_hr_effect,lm_rpe_effect ,type="html",
           dep.var.labels=c("%HRR during exercise","Ratings of Perceived Exertion (RPE"),
           covariate.labels = c("Intercept","Condition","Order","Condition*Order"),
