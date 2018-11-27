@@ -106,6 +106,7 @@ ggplot(data_long, aes(x=condition,y=hr,fill=condition)) +
 
 
 
+
 **GGplot is powerful and can help you add a lot of information to a plot like below**  
 
 ```{r acute-hr}
@@ -132,8 +133,8 @@ ggplot(data_long, aes(x=condition,y=hr,fill=condition)) +
 
 # save a high-resolution file in your directory for pub-level figures
 ggsave("acute-hr.tiff", width = 200, height = 100, units = "mm",dpi=300) 
-
 ```
+
 
 
 
@@ -174,6 +175,7 @@ ggplot(data_long, aes(x=condition,y=hr,group=bike_id,color=order)) +
 ```
 
 
+
 **Power of facet wrap to plot by a factor**  
 * by variable factor
 
@@ -193,6 +195,7 @@ ggplot(data_long, aes(x=condition,y=hr,group=bike_id,color=order)) +
 ```
 
 
+
 * by subject  
 
 ```{r}
@@ -201,6 +204,7 @@ ggplot(data_long, aes(x=condition,y=hr,group=bike_id,color=order)) +
   geom_point() +
   facet_wrap(~bike_id)
 ```
+
 
 
 # **Paired t-test**  
@@ -217,6 +221,7 @@ t.test(data$hr_active,
        paired=TRUE, 
        conf.level=0.95)
 ```
+
 
 
 * for long format
@@ -274,6 +279,7 @@ str(data_long)
 Change condition to a factor
 ```{r}
 data_long$condition <-as.factor(data_long$condition)
+data_long$bike_id <- as.factor(data_long$bike_id)
 str(data_long)
 ```
 
@@ -319,6 +325,7 @@ data_long$bike_id <- as.factor(data_long$bike_id)
 lm_hr_dummy<-lmer(hr ~ condition*order + (1|bike_id), data=data_long)
 summary(lm_hr_dummy)
 ```
+
 
 Below is an example of formatting the model results that is better for presentation. If you replace "text" with "html" then stargazer will save the table in an .html format, which you can then open in word to copy/paste the formatted table into your results tables.  
 ```{r}
@@ -383,7 +390,7 @@ contrasts(data_long$order)
 
 Run the same regression model, now with effect coded factors..
 ```{r}
-lm_hr_effect<-lmer(hr ~ condition*order + (1|bike_id), data=data_long)
+lm_hr_effect<-lmer(hr ~ condition*order + (1 |bike_id), data=data_long)
 summary(lm_hr_effect)
 ```
 
@@ -408,6 +415,41 @@ Interpretations
 * Interaction    
   * Same as when we dummy coded...  
   
+
+```{r}
+# see that each subject gets their own intercept estimate, which was set with the (1 |bike_id) term
+coef(lm_hr_effect)
+```
+
+# **Use stargazer to compare regression output for multiple DVs** 
+```{r}
+# compare with a regression predicting self-reported intensity
+lm_rpe_effect<-lmer(rpe ~ condition*order + (1 |bike_id), data=data_long)
+
+# prepare lmer model objects for stargazer
+class(lm_hr_effect) <- "lmerMod"
+class(lm_rpe_effect) <- "lmerMod"
+
+
+# stargazer call to compare two models
+stargazer(lm_hr_effect,lm_rpe_effect ,type="text",
+          dep.var.labels=c("%HRR during exercise","Ratings of Perceived Exertion (RPE"),
+          covariate.labels = c("Intercept","Condition","Order","Condition*Order"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          intercept.bottom = FALSE)
+
+# change to html to save a file as output in the current directory
+stargazer(lm_hr_effect,lm_rpe_effect ,type="html",
+          dep.var.labels=c("%HRR during exercise","Ratings of Perceived Exertion (RPE"),
+          covariate.labels = c("Intercept","Condition","Order","Condition*Order"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          intercept.bottom = FALSE,
+          out="comparison-of-models.html")
+
+
+```
+
+
 
 
 
@@ -437,6 +479,7 @@ Resting heart rate as a covariate...
 lm_hr_effect.c<-lmer(hr ~ condition*order+rhr_m0 + (1|bike_id), data=data_long)
 summary(lm_hr_effect.c)
 ```
+
 
 Resting heart rate as a covariate WITH mean-centering by z-score scaling...
 
@@ -471,8 +514,7 @@ Often good to include a full table of beta parameters. Stargazer is a nice tool 
 * https://www.princeton.edu/~otorres/NiceOutputR.pdf
 
 ```{r}
-
-# use this for lmer models
+# prep stargazer for lmer models
 class(lm_hr_effect.c) <- "lmerMod"
 
 stargazer(lm_hr_effect.c,type="text",

@@ -9,6 +9,7 @@ Michelle Voss
 -   [**Paired t-test**](#paired-t-test)
 -   [**Regression with dummy coding**](#regression-with-dummy-coding)
 -   [**Regression with effect coding**](#regression-with-effect-coding)
+-   [**Use stargazer to compare regression output for multiple DVs**](#use-stargazer-to-compare-regression-output-for-multiple-dvs)
 -   [**Continuous predictors**](#continuous-predictors)
 
 **Clear previous, load packages**
@@ -258,6 +259,8 @@ t.test(hr ~ condition,
 library(car)
 ```
 
+    ## Loading required package: carData
+
     ## 
     ## Attaching package: 'car'
 
@@ -285,6 +288,10 @@ library(afex)
     ##     expand
 
     ## Loading required package: emmeans
+
+    ## NOTE: As of emmeans versions > 1.2.3,
+    ##       The 'cld' function will be deprecated in favor of 'CLD'.
+    ##       You may use 'cld' only if you have package:multcomp attached.
 
     ## ************
     ## Welcome to afex. For support visit: http://afex.singmann.science/
@@ -397,11 +404,12 @@ Change condition to a factor
 
 ``` r
 data_long$condition <-as.factor(data_long$condition)
+data_long$bike_id <- as.factor(data_long$bike_id)
 str(data_long)
 ```
 
     ## 'data.frame':    68 obs. of  8 variables:
-    ##  $ bike_id   : int  142 206 202 225 228 223 247 252 270 290 ...
+    ##  $ bike_id   : Factor w/ 34 levels "142","161","202",..: 1 4 3 6 7 5 8 9 10 12 ...
     ##  $ order     : Factor w/ 2 levels "active-first",..: 1 2 2 1 1 2 1 2 1 1 ...
     ##  $ subject_id: Factor w/ 33 levels "GEA161","GEA270",..: 26 31 30 27 28 32 29 33 2 3 ...
     ##  $ condition : Factor w/ 2 levels "active","passive": 1 1 1 1 1 1 1 1 1 1 ...
@@ -475,24 +483,24 @@ library(psych)
 describe(data_long)
 ```
 
-    ##             vars  n   mean     sd median trimmed   mad min   max range
-    ## bike_id        1 68 333.68 103.51 321.00  331.64 98.59 142 529.0 387.0
-    ## order*         2 68   1.50   0.50   1.50    1.50  0.74   1   2.0   1.0
-    ## subject_id*    3 66  17.00   9.59  17.00   17.00 11.86   1  33.0  32.0
-    ## condition*     4 68   1.50   0.50   1.50    1.50  0.74   1   2.0   1.0
-    ## hr             5 68  60.13  13.17  66.50   61.18  9.64  31  75.0  44.0
-    ## rpe            6 68  10.54   2.06  10.90   10.56  2.08   6  16.2  10.2
-    ## fs             7 68   2.67   1.43   3.00    2.72  1.41  -1   5.0   6.0
-    ## fas            8 68   1.86   0.91   1.98    1.74  1.45   1   5.0   4.0
-    ##              skew kurtosis    se
-    ## bike_id      0.24    -0.81 12.55
-    ## order*       0.00    -2.03  0.06
-    ## subject_id*  0.00    -1.26  1.18
-    ## condition*   0.00    -2.03  0.06
-    ## hr          -0.56    -1.23  1.60
-    ## rpe         -0.07    -0.33  0.25
-    ## fs          -0.36    -0.38  0.17
-    ## fas          1.07     0.88  0.11
+    ##             vars  n  mean    sd median trimmed   mad min  max range  skew
+    ## bike_id*       1 68 17.50  9.88  17.50   17.50 12.60   1 34.0  33.0  0.00
+    ## order*         2 68  1.50  0.50   1.50    1.50  0.74   1  2.0   1.0  0.00
+    ## subject_id*    3 66 17.00  9.59  17.00   17.00 11.86   1 33.0  32.0  0.00
+    ## condition*     4 68  1.50  0.50   1.50    1.50  0.74   1  2.0   1.0  0.00
+    ## hr             5 68 60.13 13.17  66.50   61.18  9.64  31 75.0  44.0 -0.56
+    ## rpe            6 68 10.54  2.06  10.90   10.56  2.08   6 16.2  10.2 -0.07
+    ## fs             7 68  2.67  1.43   3.00    2.72  1.41  -1  5.0   6.0 -0.36
+    ## fas            8 68  1.86  0.91   1.98    1.74  1.45   1  5.0   4.0  1.07
+    ##             kurtosis   se
+    ## bike_id*       -1.25 1.20
+    ## order*         -2.03 0.06
+    ## subject_id*    -1.26 1.18
+    ## condition*     -2.03 0.06
+    ## hr             -1.23 1.60
+    ## rpe            -0.33 0.25
+    ## fs             -0.38 0.17
+    ## fas             0.88 0.11
 
 ``` r
 describeBy(data_long,list(data_long$order,data_long$condition))
@@ -502,87 +510,87 @@ describeBy(data_long,list(data_long$order,data_long$condition))
     ##  Descriptive statistics by group 
     ## : active-first
     ## : active
-    ##             vars  n   mean     sd median trimmed    mad   min   max range
-    ## bike_id        1 17 319.88 105.84  311.0  318.80 106.75 142.0 514.0 372.0
-    ## order*         2 17   1.00   0.00    1.0    1.00   0.00   1.0   1.0   0.0
-    ## subject_id*    3 17  11.82   9.59    9.0   11.40   5.93   1.0  29.0  28.0
-    ## condition*     4 17   1.00   0.00    1.0    1.00   0.00   1.0   1.0   0.0
-    ## hr             5 17  71.59   2.32   72.0   71.80   1.48  66.0  74.0   8.0
-    ## rpe            6 17  11.74   0.86   11.6   11.73   1.04  10.3  13.4   3.1
-    ## fs             7 17   2.56   1.02    2.9    2.55   0.52   0.3   5.0   4.7
-    ## fas            8 17   1.84   0.80    2.0    1.75   0.44   1.0   4.0   3.0
-    ##              skew kurtosis    se
-    ## bike_id      0.17    -0.93 25.67
-    ## order*        NaN      NaN  0.00
-    ## subject_id*  0.77    -1.01  2.33
-    ## condition*    NaN      NaN  0.00
-    ## hr          -1.00    -0.10  0.56
-    ## rpe          0.21    -1.11  0.21
-    ## fs          -0.04     0.77  0.25
-    ## fas          1.06     0.85  0.19
+    ##             vars  n  mean    sd median trimmed   mad  min  max range  skew
+    ## bike_id*       1 17 16.41 10.06   16.0   16.33 13.34  1.0 33.0  32.0  0.09
+    ## order*         2 17  1.00  0.00    1.0    1.00  0.00  1.0  1.0   0.0   NaN
+    ## subject_id*    3 17 11.82  9.59    9.0   11.40  5.93  1.0 29.0  28.0  0.77
+    ## condition*     4 17  1.00  0.00    1.0    1.00  0.00  1.0  1.0   0.0   NaN
+    ## hr             5 17 71.59  2.32   72.0   71.80  1.48 66.0 74.0   8.0 -1.00
+    ## rpe            6 17 11.74  0.86   11.6   11.73  1.04 10.3 13.4   3.1  0.21
+    ## fs             7 17  2.56  1.02    2.9    2.55  0.52  0.3  5.0   4.7 -0.04
+    ## fas            8 17  1.84  0.80    2.0    1.75  0.44  1.0  4.0   3.0  1.06
+    ##             kurtosis   se
+    ## bike_id*       -1.37 2.44
+    ## order*           NaN 0.00
+    ## subject_id*    -1.01 2.33
+    ## condition*       NaN 0.00
+    ## hr             -0.10 0.56
+    ## rpe            -1.11 0.21
+    ## fs              0.77 0.25
+    ## fas             0.85 0.19
     ## -------------------------------------------------------- 
     ## : passive-first
     ## : active
-    ##             vars  n   mean     sd median trimmed   mad   min   max range
-    ## bike_id        1 17 347.47 104.06  327.0  345.07 85.99 202.0 529.0 327.0
-    ## order*         2 17   2.00   0.00    2.0    2.00  0.00   2.0   2.0   0.0
-    ## subject_id*    3 16  22.50   6.22   21.5   22.36  5.93  14.0  33.0  19.0
-    ## condition*     4 17   1.00   0.00    1.0    1.00  0.00   1.0   1.0   0.0
-    ## hr             5 17  69.59   2.55   70.0   69.67  2.97  65.0  73.0   8.0
-    ## rpe            6 17  12.44   1.44   12.3   12.39  0.89   9.5  16.2   6.7
-    ## fs             7 17   2.43   1.42    3.0    2.43  0.44   0.0   4.8   4.8
-    ## fas            8 17   2.34   1.07    2.2    2.26  1.19   1.0   5.0   4.0
-    ##              skew kurtosis    se
-    ## bike_id      0.30    -1.20 25.24
-    ## order*        NaN      NaN  0.00
-    ## subject_id*  0.37    -1.31  1.55
-    ## condition*    NaN      NaN  0.00
-    ## hr          -0.31    -1.32  0.62
-    ## rpe          0.75     1.17  0.35
-    ## fs          -0.53    -1.02  0.34
-    ## fas          0.57    -0.07  0.26
+    ##             vars  n  mean    sd median trimmed   mad  min  max range  skew
+    ## bike_id*       1 17 18.59 10.04   19.0   18.60 11.86  3.0 34.0  31.0 -0.09
+    ## order*         2 17  2.00  0.00    2.0    2.00  0.00  2.0  2.0   0.0   NaN
+    ## subject_id*    3 16 22.50  6.22   21.5   22.36  5.93 14.0 33.0  19.0  0.37
+    ## condition*     4 17  1.00  0.00    1.0    1.00  0.00  1.0  1.0   0.0   NaN
+    ## hr             5 17 69.59  2.55   70.0   69.67  2.97 65.0 73.0   8.0 -0.31
+    ## rpe            6 17 12.44  1.44   12.3   12.39  0.89  9.5 16.2   6.7  0.75
+    ## fs             7 17  2.43  1.42    3.0    2.43  0.44  0.0  4.8   4.8 -0.53
+    ## fas            8 17  2.34  1.07    2.2    2.26  1.19  1.0  5.0   4.0  0.57
+    ##             kurtosis   se
+    ## bike_id*       -1.42 2.44
+    ## order*           NaN 0.00
+    ## subject_id*    -1.31 1.55
+    ## condition*       NaN 0.00
+    ## hr             -1.32 0.62
+    ## rpe             1.17 0.35
+    ## fs             -1.02 0.34
+    ## fas            -0.07 0.26
     ## -------------------------------------------------------- 
     ## : active-first
     ## : passive
-    ##             vars  n   mean     sd median trimmed    mad   min   max range
-    ## bike_id        1 17 319.88 105.84  311.0  318.80 106.75 142.0 514.0 372.0
-    ## order*         2 17   1.00   0.00    1.0    1.00   0.00   1.0   1.0   0.0
-    ## subject_id*    3 17  11.82   9.59    9.0   11.40   5.93   1.0  29.0  28.0
-    ## condition*     4 17   2.00   0.00    2.0    2.00   0.00   2.0   2.0   0.0
-    ## hr             5 17  49.06   9.97   49.0   48.53   8.90  31.0  75.0  44.0
-    ## rpe            6 17   9.11   1.47    9.1    9.11   1.63   6.9  11.2   4.3
-    ## fs             7 17   3.12   1.73    3.0    3.27   1.48  -1.0   5.0   6.0
-    ## fas            8 17   1.44   0.59    1.1    1.36   0.15   1.0   3.0   2.0
-    ##              skew kurtosis    se
-    ## bike_id      0.17    -0.93 25.67
-    ## order*        NaN      NaN  0.00
-    ## subject_id*  0.77    -1.01  2.33
-    ## condition*    NaN      NaN  0.00
-    ## hr           0.66     0.58  2.42
-    ## rpe         -0.12    -1.44  0.36
-    ## fs          -0.80    -0.23  0.42
-    ## fas          1.19     0.35  0.14
+    ##             vars  n  mean    sd median trimmed   mad  min  max range  skew
+    ## bike_id*       1 17 16.41 10.06   16.0   16.33 13.34  1.0 33.0  32.0  0.09
+    ## order*         2 17  1.00  0.00    1.0    1.00  0.00  1.0  1.0   0.0   NaN
+    ## subject_id*    3 17 11.82  9.59    9.0   11.40  5.93  1.0 29.0  28.0  0.77
+    ## condition*     4 17  2.00  0.00    2.0    2.00  0.00  2.0  2.0   0.0   NaN
+    ## hr             5 17 49.06  9.97   49.0   48.53  8.90 31.0 75.0  44.0  0.66
+    ## rpe            6 17  9.11  1.47    9.1    9.11  1.63  6.9 11.2   4.3 -0.12
+    ## fs             7 17  3.12  1.73    3.0    3.27  1.48 -1.0  5.0   6.0 -0.80
+    ## fas            8 17  1.44  0.59    1.1    1.36  0.15  1.0  3.0   2.0  1.19
+    ##             kurtosis   se
+    ## bike_id*       -1.37 2.44
+    ## order*           NaN 0.00
+    ## subject_id*    -1.01 2.33
+    ## condition*       NaN 0.00
+    ## hr              0.58 2.42
+    ## rpe            -1.44 0.36
+    ## fs             -0.23 0.42
+    ## fas             0.35 0.14
     ## -------------------------------------------------------- 
     ## : passive-first
     ## : passive
-    ##             vars  n   mean     sd median trimmed   mad min   max range
-    ## bike_id        1 17 347.47 104.06  327.0  345.07 85.99 202 529.0 327.0
-    ## order*         2 17   2.00   0.00    2.0    2.00  0.00   2   2.0   0.0
-    ## subject_id*    3 16  22.50   6.22   21.5   22.36  5.93  14  33.0  19.0
-    ## condition*     4 17   2.00   0.00    2.0    2.00  0.00   2   2.0   0.0
-    ## hr             5 17  50.29  12.16   47.0   49.67 11.86  35  75.0  40.0
-    ## rpe            6 17   8.86   1.49    8.1    8.89  1.63   6  11.3   5.3
-    ## fs             7 17   2.58   1.49    3.0    2.59  1.63   0   5.0   5.0
-    ## fas            8 17   1.81   0.95    1.9    1.71  1.33   1   4.1   3.1
-    ##              skew kurtosis    se
-    ## bike_id      0.30    -1.20 25.24
-    ## order*        NaN      NaN  0.00
-    ## subject_id*  0.37    -1.31  1.55
-    ## condition*    NaN      NaN  0.00
-    ## hr           0.62    -0.95  2.95
-    ## rpe         -0.03    -1.19  0.36
-    ## fs          -0.02    -1.28  0.36
-    ## fas          0.82    -0.39  0.23
+    ##             vars  n  mean    sd median trimmed   mad min  max range  skew
+    ## bike_id*       1 17 18.59 10.04   19.0   18.60 11.86   3 34.0  31.0 -0.09
+    ## order*         2 17  2.00  0.00    2.0    2.00  0.00   2  2.0   0.0   NaN
+    ## subject_id*    3 16 22.50  6.22   21.5   22.36  5.93  14 33.0  19.0  0.37
+    ## condition*     4 17  2.00  0.00    2.0    2.00  0.00   2  2.0   0.0   NaN
+    ## hr             5 17 50.29 12.16   47.0   49.67 11.86  35 75.0  40.0  0.62
+    ## rpe            6 17  8.86  1.49    8.1    8.89  1.63   6 11.3   5.3 -0.03
+    ## fs             7 17  2.58  1.49    3.0    2.59  1.63   0  5.0   5.0 -0.02
+    ## fas            8 17  1.81  0.95    1.9    1.71  1.33   1  4.1   3.1  0.82
+    ##             kurtosis   se
+    ## bike_id*       -1.42 2.44
+    ## order*           NaN 0.00
+    ## subject_id*    -1.31 1.55
+    ## condition*       NaN 0.00
+    ## hr             -0.95 2.95
+    ## rpe            -1.19 0.36
+    ## fs             -1.28 0.36
+    ## fas            -0.39 0.23
 
 Resources comparing anova and regression
 \* <https://m-clark.github.io/docs/mixedModels/anovamixed.html> \* mixed model generally: <https://gkhajduk.github.io/2017-03-09-mixed-models/>
@@ -596,8 +604,8 @@ lm_hr_dummy<-lmer(hr ~ condition*order + (1|bike_id), data=data_long)
 summary(lm_hr_dummy)
 ```
 
-    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
-    ##   to degrees of freedom [lmerMod]
+    ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+    ## lmerModLmerTest]
     ## Formula: hr ~ condition * order + (1 | bike_id)
     ##    Data: data_long
     ## 
@@ -615,9 +623,9 @@ summary(lm_hr_dummy)
     ## 
     ## Fixed effects:
     ##                               Estimate Std. Error     df t value Pr(>|t|)
-    ## (Intercept)                     49.059      1.952 64.000  25.129  < 2e-16
+    ## (Intercept)                     49.059      1.952 63.996  25.129  < 2e-16
     ## condition1                      22.529      2.751 32.000   8.191 2.35e-09
-    ## orderpassive-first               1.235      2.761 64.000   0.447    0.656
+    ## orderpassive-first               1.235      2.761 63.996   0.447    0.656
     ## condition1:orderpassive-first   -3.235      3.890 32.000  -0.832    0.412
     ##                                  
     ## (Intercept)                   ***
@@ -739,12 +747,12 @@ contrasts(data_long$order)
 Run the same regression model, now with effect coded factors..
 
 ``` r
-lm_hr_effect<-lmer(hr ~ condition*order + (1|bike_id), data=data_long)
+lm_hr_effect<-lmer(hr ~ condition*order + (1 |bike_id), data=data_long)
 summary(lm_hr_effect)
 ```
 
-    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
-    ##   to degrees of freedom [lmerMod]
+    ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+    ## lmerModLmerTest]
     ## Formula: hr ~ condition * order + (1 | bike_id)
     ##    Data: data_long
     ## 
@@ -793,6 +801,132 @@ Interpretations
 -   Interaction
 -   Same as when we dummy coded...
 
+``` r
+# see that each subject gets their own intercept estimate, which was set with the (1 |bike_id) term
+coef(lm_hr_effect)
+```
+
+    ## $bike_id
+    ##     (Intercept) condition1     order1 condition1:order1
+    ## 142    60.14237   20.91176 -0.3823529         -3.235294
+    ## 161    60.34235   20.91176 -0.3823529         -3.235294
+    ## 202    60.12582   20.91176 -0.3823529         -3.235294
+    ## 206    60.12582   20.91176 -0.3823529         -3.235294
+    ## 223    60.07397   20.91176 -0.3823529         -3.235294
+    ## 225    60.17200   20.91176 -0.3823529         -3.235294
+    ## 228    60.17200   20.91176 -0.3823529         -3.235294
+    ## 247    60.09794   20.91176 -0.3823529         -3.235294
+    ## 252    60.12582   20.91176 -0.3823529         -3.235294
+    ## 270    60.20162   20.91176 -0.3823529         -3.235294
+    ## 289    60.07397   20.91176 -0.3823529         -3.235294
+    ## 290    60.22384   20.91176 -0.3823529         -3.235294
+    ## 291    60.05916   20.91176 -0.3823529         -3.235294
+    ## 295    60.26654   20.91176 -0.3823529         -3.235294
+    ## 307    59.99425   20.91176 -0.3823529         -3.235294
+    ## 311    60.07572   20.91176 -0.3823529         -3.235294
+    ## 316    60.17941   20.91176 -0.3823529         -3.235294
+    ## 326    60.05175   20.91176 -0.3823529         -3.235294
+    ## 327    60.08879   20.91176 -0.3823529         -3.235294
+    ## 351    60.13497   20.91176 -0.3823529         -3.235294
+    ## 357    60.14978   20.91176 -0.3823529         -3.235294
+    ## 360    60.00732   20.91176 -0.3823529         -3.235294
+    ## 374    60.10360   20.91176 -0.3823529         -3.235294
+    ## 381    60.02213   20.91176 -0.3823529         -3.235294
+    ## 383    60.06831   20.91176 -0.3823529         -3.235294
+    ## 385    60.26654   20.91176 -0.3823529         -3.235294
+    ## 392    60.10534   20.91176 -0.3823529         -3.235294
+    ## 457    60.06090   20.91176 -0.3823529         -3.235294
+    ## 472    60.15544   20.91176 -0.3823529         -3.235294
+    ## 484    60.28876   20.91176 -0.3823529         -3.235294
+    ## 487    60.07572   20.91176 -0.3823529         -3.235294
+    ## 511    60.17766   20.91176 -0.3823529         -3.235294
+    ## 514    60.05350   20.91176 -0.3823529         -3.235294
+    ## 529    60.23691   20.91176 -0.3823529         -3.235294
+    ## 
+    ## attr(,"class")
+    ## [1] "coef.mer"
+
+**Use stargazer to compare regression output for multiple DVs**
+===============================================================
+
+``` r
+# compare with a regression predicting self-reported intensity
+lm_rpe_effect<-lmer(rpe ~ condition*order + (1 |bike_id), data=data_long)
+
+# prepare lmer model objects for stargazer
+class(lm_hr_effect) <- "lmerMod"
+class(lm_rpe_effect) <- "lmerMod"
+
+
+# stargazer call to compare two models
+stargazer(lm_hr_effect,lm_rpe_effect ,type="text",
+          dep.var.labels=c("%HRR during exercise","Ratings of Perceived Exertion (RPE"),
+          covariate.labels = c("Intercept","Condition","Order","Condition*Order"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          intercept.bottom = FALSE)
+```
+
+    ## 
+    ## ===========================================================================
+    ##                                       Dependent variable:                  
+    ##                     -------------------------------------------------------
+    ##                     %HRR during exercise Ratings of Perceived Exertion (RPE
+    ##                             (1)                         (2)                
+    ## ---------------------------------------------------------------------------
+    ## Intercept                60.132***                   10.538***             
+    ##                           (0.980)                     (0.175)              
+    ##                                                                            
+    ## Condition                20.912***                    3.106***             
+    ##                           (1.945)                     (0.299)              
+    ##                                                                            
+    ## Order                      -0.382                      0.229               
+    ##                           (1.960)                     (0.349)              
+    ##                                                                            
+    ## Condition*Order            -3.235                      0.941               
+    ##                           (3.890)                     (0.598)              
+    ##                                                                            
+    ## ---------------------------------------------------------------------------
+    ## Observations                 68                          68                
+    ## Log Likelihood            -229.956                    -114.807             
+    ## Akaike Inf. Crit.         471.911                     241.613              
+    ## Bayesian Inf. Crit.       485.228                     254.930              
+    ## ===========================================================================
+    ## Note:                                         *p<0.05; **p<0.01; ***p<0.001
+
+``` r
+# change to html to save a file as output in the current directory
+stargazer(lm_hr_effect,lm_rpe_effect ,type="html",
+          dep.var.labels=c("%HRR during exercise","Ratings of Perceived Exertion (RPE"),
+          covariate.labels = c("Intercept","Condition","Order","Condition*Order"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          intercept.bottom = FALSE,
+          out="comparison-of-models.html")
+```
+
+    ## 
+    ## <table style="text-align:center"><tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"></td><td colspan="2"><em>Dependent variable:</em></td></tr>
+    ## <tr><td></td><td colspan="2" style="border-bottom: 1px solid black"></td></tr>
+    ## <tr><td style="text-align:left"></td><td>%HRR during exercise</td><td>Ratings of Perceived Exertion (RPE</td></tr>
+    ## <tr><td style="text-align:left"></td><td>(1)</td><td>(2)</td></tr>
+    ## <tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Intercept</td><td>60.132<sup>***</sup></td><td>10.538<sup>***</sup></td></tr>
+    ## <tr><td style="text-align:left"></td><td>(0.980)</td><td>(0.175)</td></tr>
+    ## <tr><td style="text-align:left"></td><td></td><td></td></tr>
+    ## <tr><td style="text-align:left">Condition</td><td>20.912<sup>***</sup></td><td>3.106<sup>***</sup></td></tr>
+    ## <tr><td style="text-align:left"></td><td>(1.945)</td><td>(0.299)</td></tr>
+    ## <tr><td style="text-align:left"></td><td></td><td></td></tr>
+    ## <tr><td style="text-align:left">Order</td><td>-0.382</td><td>0.229</td></tr>
+    ## <tr><td style="text-align:left"></td><td>(1.960)</td><td>(0.349)</td></tr>
+    ## <tr><td style="text-align:left"></td><td></td><td></td></tr>
+    ## <tr><td style="text-align:left">Condition*Order</td><td>-3.235</td><td>0.941</td></tr>
+    ## <tr><td style="text-align:left"></td><td>(3.890)</td><td>(0.598)</td></tr>
+    ## <tr><td style="text-align:left"></td><td></td><td></td></tr>
+    ## <tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Observations</td><td>68</td><td>68</td></tr>
+    ## <tr><td style="text-align:left">Log Likelihood</td><td>-229.956</td><td>-114.807</td></tr>
+    ## <tr><td style="text-align:left">Akaike Inf. Crit.</td><td>471.911</td><td>241.613</td></tr>
+    ## <tr><td style="text-align:left">Bayesian Inf. Crit.</td><td>485.228</td><td>254.930</td></tr>
+    ## <tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"><em>Note:</em></td><td colspan="2" style="text-align:right"><sup>*</sup>p<0.05; <sup>**</sup>p<0.01; <sup>***</sup>p<0.001</td></tr>
+    ## </table>
+
 **Continuous predictors**
 =========================
 
@@ -817,8 +951,8 @@ lm_hr_effect.c<-lmer(hr ~ condition*order+rhr_m0 + (1|bike_id), data=data_long)
 summary(lm_hr_effect.c)
 ```
 
-    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
-    ##   to degrees of freedom [lmerMod]
+    ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+    ## lmerModLmerTest]
     ## Formula: hr ~ condition * order + rhr_m0 + (1 | bike_id)
     ##    Data: data_long
     ## 
@@ -858,8 +992,8 @@ lm_hr_effect.c<-lmer(hr ~ condition*order+scale(rhr_m0) + (1|bike_id), data=data
 summary(lm_hr_effect.c)
 ```
 
-    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
-    ##   to degrees of freedom [lmerMod]
+    ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+    ## lmerModLmerTest]
     ## Formula: hr ~ condition * order + scale(rhr_m0) + (1 | bike_id)
     ##    Data: data_long
     ## 
@@ -900,8 +1034,8 @@ lm_hr_effect.c<-lmer(hr ~ condition*order*rhr_m0 + (1|bike_id), data=data_long)
 summary(lm_hr_effect.c)
 ```
 
-    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
-    ##   to degrees of freedom [lmerMod]
+    ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+    ## lmerModLmerTest]
     ## Formula: hr ~ condition * order * rhr_m0 + (1 | bike_id)
     ##    Data: data_long
     ## 
@@ -947,8 +1081,8 @@ lm_hr_effect.c<-lmer(hr ~ condition*order*scale(rhr_m0)+ (1|bike_id), data=data_
 summary(lm_hr_effect.c)
 ```
 
-    ## Linear mixed model fit by REML t-tests use Satterthwaite approximations
-    ##   to degrees of freedom [lmerMod]
+    ## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+    ## lmerModLmerTest]
     ## Formula: hr ~ condition * order * scale(rhr_m0) + (1 | bike_id)
     ##    Data: data_long
     ## 
@@ -976,7 +1110,7 @@ summary(lm_hr_effect.c)
     ## condition1:order1:scale(rhr_m0)  -0.4069     3.9256 60.0000  -0.104
     ##                                 Pr(>|t|)    
     ## (Intercept)                      < 2e-16 ***
-    ## condition1                      4.44e-16 ***
+    ## condition1                      3.28e-16 ***
     ## order1                            0.5776    
     ## scale(rhr_m0)                     0.0111 *  
     ## condition1:order1                 0.5375    
@@ -1001,7 +1135,7 @@ Reporting regression results
 Often good to include a full table of beta parameters. Stargazer is a nice tool to help with this: \* <https://www.jakeruss.com/cheatsheets/stargazer/> \* <https://www.princeton.edu/~otorres/NiceOutputR.pdf>
 
 ``` r
-# use this for lmer models
+# prep stargazer for lmer models
 class(lm_hr_effect.c) <- "lmerMod"
 
 stargazer(lm_hr_effect.c,type="text",
@@ -1060,7 +1194,7 @@ library(jtools)
 interact_plot(lm_hr_effect.c, pred = "rhr_m0", modx = "condition",plot.points = TRUE, data=data_long)
 ```
 
-![](exercise_fileprep-plots-anova-regression_files/figure-markdown_github/unnamed-chunk-33-1.png)
+![](exercise_fileprep-plots-anova-regression_files/figure-markdown_github/unnamed-chunk-35-1.png)
 
 Curious about CRF ?
 \* What would you predict?
